@@ -18,9 +18,10 @@ db.control.remove({}, function(err) {
 
     obj.save(function(err) {
       if(err) return console.error(err);
+
+      console.log('Complete');
+      process.exit();
     });
   }
 
 });
-
-console.log('Complete');
