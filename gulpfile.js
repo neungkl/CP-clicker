@@ -17,8 +17,8 @@ gulp.task('watch', function() {
     }
   });
 
-  gulp.watch('public/**/*', ['sass', 'es6']);
-  gulp.watch('public/**/*').on('change', browserSync.reload);
+  gulp.watch(['public/**/*', 'views/**/*'], ['sass', 'es6']);
+  gulp.watch(['public/**/*', 'views/**/*']).on('change', browserSync.reload);
 });
 
 gulp.task('sass', function() {

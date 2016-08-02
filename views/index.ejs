@@ -10,42 +10,43 @@
         height: 100%;
         padding: 0px;
         margin: 0px;
-      }
-      .container {
-        width: 100%;
-      }
-      .circle {
-        display: block;
-        margin: auto;
-        overflow: none;
-        background: #111;
-      }
-      .text {
-        color: #eee;
-        text-align: center;
         font-family: 'Roboto', Tahoma, sans-serif;
+      }
+      .input {
+        margin: auto;
+        max-width: 600px;
+        text-align: center;
+      }
+      .input > * {
+        font-size: 2em;
+      }
+      .input > input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        text-align: center;
+        border-bottom: 1px solid #333;
+      }
+      .submit {
+        display: inline-block;
+        font-size: 3em;
+        color: white;
+        background: #207996;
+        padding: 10px 50px;
+        cursor: pointer;
+      }
+      .err {
+        font-size: 1.5em;
+        color: red;
       }
     </style>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
     <script>
 
       function initUI () {
-        var width = Math.min($(window).width(), $(window).height()) * .8;
-
-        $('.circle').css({
-          height: width,
-          width: width,
-          borderRadius: width / 2
-        });
-
         $('.container').css({
-          paddingTop: ($(window).height() - width) / 2
+          paddingTop: ($(window).height() - $('.input').height()) / 2
         });
-
-        $('.text').css({
-          fontSize : width * .3,
-          paddingTop : (width * .6) / 2
-        })
       }
 
       $(function() {
@@ -53,15 +54,67 @@
         $(window).resize(initUI);
         initUI();
 
+        $('.submit').click(function() {
+
+          function err(txt) {
+            $('.err').text(txt);
+          }
+
+          var name = $('.name').val();
+          var studentID = $('.studentID').val();
+
+          console.log(name, studentID);
+
+          if($.trim(name).length === 0) { err('Please enter name.'); return ; }
+          if(/^[0-9]{10}$/g.test(studentID) === false) { err('Student ID format incorrect.'); return ; }
+          err('');
+
+          $.ajax({
+            url: './login',
+            type: 'POST',
+            data: {
+              name: name,
+              studentID: studentID
+            },
+            success: function(res) {
+              if(res === 'true') window.location.href = './clicker';
+              else {
+                err('Internet interrupt. Please refresh.');
+              }
+            },
+            error: function(err) {
+              console.error(err);
+              err('Internet interrupt. Please refresh.');
+            }
+          })
+        });
+
         console.log($(window).width());
       });
     </script>
   </head>
   <body>
     <div class="container">
-      <div class="circle">
-        <div class="text">WAIT</div>
+      <div class="input">
+        <div>
+          Enter your user (Whatever you want) :
+        </div>
+        <input class="name" type="text">
+        <div style="margin-top: 1.5em;">
+          Enter your student ID (58xxxxxxx21) :
+        </div>
+        <input class="studentID" type="text">
+        <div style="margin-top: 0.8em;" class="err"></div>
+        <div style="margin-top: 0.8em;" class="submit">Enter</div>
       </div>
     </div>
+
+  <% if(production) { %>
+    <script id="__bs_script__">
+    //<![CDATA[
+    document.write("<script async src='http://HOST:3000/browser-sync/browser-sync-client.2.14.0.js'><\/script>".replace("HOST", location.hostname));
+    //]]>
+    </script>
+  <% } %>
   </body>
 </html>
