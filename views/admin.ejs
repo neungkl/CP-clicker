@@ -18,6 +18,97 @@
     </style>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
     <script>
+      function reject(stat, sid) {
+        $.ajax({
+          url: 'admin/updateReject',
+          data: {
+            reject: stat,
+            sid: sid
+          },
+          type: 'POST',
+          dataType: 'json',
+          success: function(res) {
+            if(res.success) $('#summarize-panel table').bootstrapTable('refresh');
+            else alert('Error');
+          },
+          error: function() {
+            alert('Error');
+          }
+        });
+      }
+
+      var controlErrInterval;
+      function controlErr(txt) {
+        clearTimeout(controlErrInterval);
+        $('.controlErr').text(txt);
+        controlErrInterval = setTimeout(function() {
+          $('.controlErr').text('');
+        }, 3000);
+      }
+
+      function updateControl(type, val) {
+
+        if(val == 'logout') {
+          if(!confirm('Are you sure to logout all session ?')) {
+            return ;
+          }
+        }
+
+        $.ajax({
+          url: 'admin/updateControl',
+          data: {
+            type: type,
+            val: val
+          },
+          type: 'POST',
+          dataType: 'json',
+          success: function(res) {
+            if(res.success) controlErr('Complete');
+            else {
+              controlErr('');
+              alert('Error');
+            }
+          },
+          error: function() {
+            controlErr('');
+            alert('Error');
+          }
+        });
+      }
+
+      function clean() {
+
+        if(!confirm('Are you sure to clean ?')) {
+          return ;
+        }
+
+        $.ajax({
+          url: 'admin/clean',
+          type: 'POST',
+          dataType: 'json',
+          success: function(res) {
+            if(res.success) controlErr('Complete');
+            else {
+              controlErr('');
+              alert('Error');
+            }
+          },
+          error: function() {
+            controlErr('');
+            alert('Error');
+          }
+        });
+      }
+
+      function controlSync() {
+        $.get('../ping', function(data) {
+          data = JSON.parse(data);
+          $('input[name="state"][value="' + data.state + '"]').parent().addClass("active");
+          $('input[name="isPlay"][value="' + data.isPlay + '"]').parent().addClass("active");
+          $('input[name="pingTime"][value="' + data.pingTime + '"]').parent().addClass("active");
+        });
+      }
+
       $(function() {
 
         var tableConfig = {
@@ -52,17 +143,33 @@
             field: 'reject',
             title: 'reject',
             align: 'center',
-            formatter: function(val) {
-              if(val === 'true') {
-                return '<div class="btn btn-sm btn-danger">Reject</div>';
+            formatter: function(val, data) {
+              if(val) {
+                return '<div class="btn btn-sm btn-danger" onclick="reject(false, \'' + data.sid + '\')">Reject</div>';
               } else {
-                return '<div class="btn btn-sm btn-primary">Pass</div>';
+                return '<div class="btn btn-sm btn-primary" onclick="reject(true, \'' + data.sid + '\')">Pass</div>';
               }
             }
           }]
         };
 
+        controlSync();
+
+        $('input[name="state"]').change(function () {
+          updateControl('state',$(this).val());
+        });
+        $('input[name="isPlay"]').change(function () {
+          updateControl('isPlay',$(this).val());
+        });
+        $('input[name="pingTime"]').change(function () {
+          updateControl('pingTime',$(this).val());
+        });
+
+        $('.cleanGame').click(clean);
+
         $('#summarize-panel table').bootstrapTable(tableConfig);
+
+
       });
     </script>
   </head>
@@ -110,18 +217,14 @@
               <div role="tabpanel" class="tab-pane active" id="control-panel">
                 <div style="margin-top:15px;">
 
-                  <div class="headline">Clean user : </div>
-
-                  <div class="btn btn-primary cleanUser">Clean User</div>
-
                   <div class="headline">Clean game : </div>
 
-                  <div class="btn btn-primary cleanUser">Clean Game</div>
+                  <div class="btn btn-primary cleanGame">Clean Game</div>
 
                   <div class="headline">State :</div>
 
                   <div class="btn-group" data-toggle="buttons">
-                    <label class="btn btn-primary active">
+                    <label class="btn btn-primary">
                       <input type="radio" name="state" value="wait" autocomplete="off"> Wait
                     </label>
                     <label class="btn btn-primary">
@@ -133,12 +236,15 @@
                     <label class="btn btn-primary">
                       <input type="radio" name="state" value="reject" autocomplete="off"> Reject
                     </label>
+                    <label class="btn btn-primary">
+                      <input type="radio" name="state" value="logout" autocomplete="off"> Logout
+                    </label>
                   </div>
 
                   <div class="headline">Is Play :</div>
 
                   <div class="btn-group" data-toggle="buttons">
-                    <label class="btn btn-danger active">
+                    <label class="btn btn-danger">
                       <input type="radio" name="isPlay" value="false" autocomplete="off"> False
                     </label>
                     <label class="btn btn-primary">
@@ -149,7 +255,10 @@
                   <div class="headline">Ping Time :</div>
 
                   <div class="btn-group" data-toggle="buttons">
-                    <label class="btn btn-primary active">
+                    <label class="btn btn-primary">
+                      <input type="radio" name="pingTime" value="0.1" autocomplete="off"> 0.1
+                    </label>
+                    <label class="btn btn-primary">
                       <input type="radio" name="pingTime" value="1" autocomplete="off"> 1
                     </label>
                     <label class="btn btn-primary">
@@ -163,6 +272,8 @@
                     </label>
                   </div>
 
+                  <div class="controlErr headline text-success"></div>
+
                 </div>
               </div>
               <div role="tabpanel" class="tab-pane" id="summarize-panel">
@@ -175,9 +286,9 @@
       </div>
     </div>
 
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.0/bootstrap-table.min.js"></script>
     <% if(production) { %>
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.0/bootstrap-table.min.js"></script>
       <script id="__bs_script__">
       //<![CDATA[
       document.write("<script async src='http://HOST:3000/browser-sync/browser-sync-client.2.14.0.js'><\/script>".replace("HOST", location.hostname));

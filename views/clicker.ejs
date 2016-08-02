@@ -74,9 +74,13 @@
         setCol(col);
       }
 
+      function randString() {
+        return '?' + Math.random().toString(36).substring(7);
+      }
+
       function stateFetching() {
 
-        $.get('/ping', function(data) {
+        $.get('/ping' + randString(), function(data) {
 
           data = JSON.parse(data);
           console.log('PING !!! ' + intervalTime);
@@ -86,14 +90,25 @@
 
           switch(data.state) {
             case 'wait' : set('WAIT', 'grey'); gameScore = 0; break;
-            case 'ready' : set('READY', 'blue'); gameScore = 1; break;
-            case 'play' : set(gameScore - 1, 'black'); break;
+            case 'ready' : set('READY', 'blue'); gameScore = -1; break;
+            case 'play' : {
+              if(gameScore == -1) {
+                $.get('/click' + randString());
+                gameScore = 0;
+              }
+              set(gameScore, 'black'); break;
+            }
             case 'reject' : {
-              $.get('/isReject', function(data2) {
+              $.get('/isReject' + randString(), function(data2) {
                 if(data2 === 'Yes') setCol('red');
                 else setCol('black');
               });
               break;
+            }
+            case 'logout' : {
+              $.get('/logout' + randString(), function() {
+                window.location.href = './index';
+              });
             }
           }
         });
@@ -103,8 +118,9 @@
 
       function circleClick() {
         if(isPlay) {
-          $.get('/click', function(data) {
+          $.get('/click' + randString(), function(data) {
             if(data === 'Yes') gameScore++;
+            set(gameScore, 'black');
           });
         }
       }

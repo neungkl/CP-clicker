@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
 
-mongoose.connect(process.env.DB_URI || "mongodb://localhost:27017/clicker");
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/clicker");
 
 var controlSchema = mongoose.Schema({
   key: String,
