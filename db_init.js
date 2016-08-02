@@ -2,10 +2,8 @@ var db = require('./db.js');
 
 var control = {
   state: 'wait',
-  color: '#111',
   isPlay: 'false',
-  pingTime: 30,
-  injectPerson: ''
+  pingTime: 30
 };
 
 db.control.remove({}, function(err) {

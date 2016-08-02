@@ -19,6 +19,7 @@
         margin: auto;
         overflow: none;
         background: #111;
+        cursor: pointer;
       }
       .text {
         color: #eee;
@@ -28,6 +29,10 @@
     </style>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
     <script>
+
+      var intervalTime = 10;
+      var isPlay = false;
+      var gameScore = 0;
 
       function initUI () {
         var width = Math.min($(window).width(), $(window).height()) * .8;
@@ -43,15 +48,74 @@
         });
 
         $('.text').css({
-          fontSize : width * .3,
-          paddingTop : (width * .6) / 2
+          fontSize : width * .25,
+          paddingTop : (width * .7) / 2
         })
+      }
+
+      function setCol(col) {
+        if(col === 'black') {
+          $('.circle').css('backgroundColor', '#111');
+        } else if(col === 'blue') {
+          $('.circle').css('backgroundColor', '#15B5E6');
+        } else if(col === 'red') {
+          $('.circle').css('backgroundColor', '#E60B0B');
+        } else if(col === 'grey') {
+          $('.circle').css('backgroundColor', '#333');
+        }
+      }
+
+      function setText(txt) {
+        $('.text').text(txt);
+      }
+
+      function set(txt, col) {
+        setText(txt);
+        setCol(col);
+      }
+
+      function stateFetching() {
+
+        $.get('/ping', function(data) {
+
+          data = JSON.parse(data);
+          console.log('PING !!! ' + intervalTime);
+
+          isPlay = data.isPlay;
+          intervalTime = data.pingTime * 1000;
+
+          switch(data.state) {
+            case 'wait' : set('WAIT', 'grey'); gameScore = 0; break;
+            case 'ready' : set('READY', 'blue'); gameScore = 1; break;
+            case 'play' : set(gameScore - 1, 'black'); break;
+            case 'reject' : {
+              $.get('/isReject', function(data2) {
+                if(data2 === 'Yes') setCol('red');
+                else setCol('black');
+              });
+              break;
+            }
+          }
+        });
+
+        setTimeout(stateFetching, intervalTime);
+      }
+
+      function circleClick() {
+        if(isPlay) {
+          $.get('/click', function(data) {
+            if(data === 'Yes') gameScore++;
+          });
+        }
       }
 
       $(function() {
 
         $(window).resize(initUI);
         initUI();
+        stateFetching();
+
+        $('.circle').click(circleClick);
 
         console.log($(window).width());
       });

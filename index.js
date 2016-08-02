@@ -67,12 +67,119 @@ app.post('/login', function(req, res) {
   var user = new db.user({
     user: req.body.name,
     studentID: req.body.studentID,
-    sid: req.sessionID
-  })
-  req.session.inGame = true;
+    sid: req.sessionID,
+    reject: false
+  });
 
-  res.send('true');
-  res.end();
+  user.save(function(err) {
+    if(err) {
+      res.send('false');
+      res.end();
+      return ;
+    }
+
+    req.session.inGame = true;
+    res.send('true');
+    res.end();
+  });
+});
+
+app.get('/ping', function(req, res) {
+
+  var send = {
+    'status' : 'incomplete'
+  };
+
+  db.control.find({}, function(err, data) {
+    if(err) {
+      res.send(JSON.stringify(send));
+      res.end();
+    }
+
+    send.status = 'complete';
+    for(var i=0; i<data.length; i++) {
+      send[data[i].key] = data[i].value;
+    }
+
+    res.send(JSON.stringify(send));
+    res.end();
+  });
+})
+
+app.get('/click', function(req, res) {
+  db.control.findOne({ key : 'isPlay'}, function(err, data) {
+    if(err) { res.send('No'); res.end(); }
+
+    if(data.value === 'true') {
+      var ins = new db.click({
+        user: req.sessionID
+      });
+
+      ins.save(function(err) {
+        if(err) { res.send('No'); res.end(); }
+        else {
+          res.send('Yes');
+          res.end();
+        }
+      });
+    } else {
+      res.send('No');
+      res.end();
+    }
+  });
+});
+
+app.get('/admin', function(req, res) {
+  if(req.query.pass === (process.env.ADMIN_PASSWORD || '1234')) {
+    req.session.admin = true;
+    res.writeHead(302, {'Location': './admin'});
+    res.end();
+  } else if(typeof req.session.admin === 'undefined' || req.session.admin == null || req.session.admin === false) {
+    res.writeHead(302, {'Location': './index'});
+    res.end();
+  } else {
+    res.render('admin', { production: isProduction });
+  }
+});
+
+app.get('/admin/*', function(req, res, next) {
+  if(typeof req.session.admin === 'undefined' || req.session.admin == null || req.session.admin === false) {
+    res.writeHead(302, {'Location': '../index'});
+    res.end();
+  } else {
+    next();
+  }
+});
+
+app.get('/admin/data', function(req, res) {
+  db.user.find({}, function(err, userData) {
+    if(err) { res.send('[]'); res.end(); }
+
+    db.click.find({}, function(err2, clickData) {
+      if(err2) { res.send('[]'); res.end(); }
+
+      var ret = [];
+
+      for(var i=0; i<userData.length; i++) {
+        ret[i] = {
+          user: userData[i].user,
+          studentID: userData[i].studentID,
+          sid: userData[i].sid,
+          reject: userData[i].reject,
+          count: -1
+        };
+      }
+
+      for(var i=0; i<userData.length; i++) {
+        for(var j=0; j<clickData.length; j++) {
+          if(userData[i].sid == clickData[j].user) ret[i].count++;
+        }
+      }
+
+      res.send(JSON.stringify(ret));
+      res.end();
+    });
+  });
 });
 
 app.listen(app.get('port'), function() {

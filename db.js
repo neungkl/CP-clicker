@@ -10,12 +10,12 @@ var controlSchema = mongoose.Schema({
 var userSchema = mongoose.Schema({
   user: String,
   studentID: String,
-  sid: String
+  sid: String,
+  reject: Boolean
 });
 
 var clickSchema = mongoose.Schema({
-  user: String,
-  timestamp: { type: Date, default: Date.now }
+  user: String
 });
 
 module.exports = {
