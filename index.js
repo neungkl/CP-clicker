@@ -101,6 +101,7 @@ app.get('/ping', function(req, res) {
     if(err || typeof data === 'undefined' || data == null) {
       res.send(JSON.stringify(send));
       res.end();
+      return ;
     }
 
     send.status = 'complete';
@@ -115,7 +116,7 @@ app.get('/ping', function(req, res) {
 
 app.get('/click', function(req, res) {
   db.control.findOne({ key : 'isPlay'}, function(err, data) {
-    if(err || typeof data === 'undefined' || data == null) { res.send('No'); res.end(); }
+    if(err || typeof data === 'undefined' || data == null) { res.send('No'); res.end(); return ; }
 
     if(data.value === 'true') {
       var ins = new db.click({
@@ -170,10 +171,10 @@ app.all('/admin/*', function(req, res, next) {
 
 app.get('/admin/data', function(req, res) {
   db.user.find({}, function(err, userData) {
-    if(err) { res.send('[]'); res.end(); }
+    if(err) { res.send('[]'); res.end(); return ; }
 
     db.click.find({}, function(err2, clickData) {
-      if(err2) { res.send('[]'); res.end(); }
+      if(err2) { res.send('[]'); res.end(); return ; }
 
       if(typeof userData === 'undefined' || userData == null ||
          typeof clickData === 'undefined' || clickData == null) {
@@ -207,12 +208,12 @@ app.get('/admin/data', function(req, res) {
 app.post('/admin/updateReject', function(req, res) {
   db.user.findOne({ sid: req.body.sid }, function (err, doc) {
     if(err || typeof doc === 'undefined' || doc == null) {
-      res.send('Error'); res.end();
+      res.send('Error'); res.end(); return ;
     }
 
     doc.reject = req.body.reject;
     doc.save(function(err) {
-      if(err) { res.send('Error'); res.end(); }
+      if(err) { res.send('Error'); res.end(); return ; }
 
       res.send('{"success": true}'); res.end();
     });
@@ -223,11 +224,12 @@ app.post('/admin/updateControl', function(req, res) {
   db.control.findOne({ key: req.body.type }, function (err, doc) {
     if(err || typeof doc === 'undefined' || doc == null) {
       res.send('Error'); res.end();
+      return ;
     }
 
     doc.value = req.body.val;
     doc.save(function(err) {
-      if(err) { res.send('Error'); res.end(); }
+      if(err) { res.send('Error'); res.end(); return ; }
 
       res.send('{"success": true}'); res.end();
     });
@@ -236,7 +238,7 @@ app.post('/admin/updateControl', function(req, res) {
 
 app.post('/admin/clean', function(req, res) {
   db.click.remove({}, function(err) {
-    if(err) { res.send('Error'); res.end(); }
+    if(err) { res.send('Error'); res.end(); return ; }
     else {
       res.send('{"success": true}'); res.end();
     }

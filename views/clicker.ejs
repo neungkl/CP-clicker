@@ -86,8 +86,9 @@
           data = JSON.parse(data);
           console.log('PING !!! ' + intervalTime);
 
-          isPlay = data.isPlay;
+          isPlay = data.isPlay === "true";
           intervalTime = data.pingTime * 1000;
+          intervalTime = intervalTime || 1000;
 
           switch(data.state) {
             case 'wait' : set('WAIT', 'grey'); gameScore = 0; break;
@@ -97,7 +98,8 @@
                 $.get('/click' + randString());
                 gameScore = 0;
               }
-              set(gameScore, 'black'); break;
+              set(gameScore, 'black');
+              break;
             }
             case 'reject' : {
               $.get('/isReject' + randString(), function(data2) {
@@ -110,6 +112,7 @@
               $.get('/logout' + randString(), function() {
                 window.location.href = './index';
               });
+              break;
             }
           }
         });
