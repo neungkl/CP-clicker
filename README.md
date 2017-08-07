@@ -1,7 +1,13 @@
-# CP Clicker
+# :collision: CP Clicker
 
 The click competition mini game.<br>
 Use in Prog Meth 101 own lecture during the class.
+
+## Demo
+
+:point_right: https://cp-clicker.herokuapp.com/
+
+Or you can play as admin: https://cp-clicker.herokuapp.com/admin?pass=1234
 
 ## Installation
 
@@ -12,7 +18,6 @@ Use in Prog Meth 101 own lecture during the class.
 5. Set up `ENV.DB_URI` for DB server and `ENV.ADMIN_PASS` for admin password
 (default is 1234)
 6. Run `npm start`
-
 
 ## License
 
